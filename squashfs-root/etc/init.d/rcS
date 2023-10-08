@@ -1,0 +1,38 @@
+#!/bin/sh
+
+restore_tag=1
+
+flash test-hwconf
+if [ $? != 0 ]; then
+	echo 'HW configuration invalid, reset default!'
+	flash default
+fi
+
+#jim add 20211028
+flash check-backup
+if [ $? == 2 ]
+then
+	echo 'HW configuration restore !'
+	restore_tag=2
+	flash test-hwconf
+elif [ $? == 3 ]
+then
+	echo 'backup HW config'
+elif [ $? == 0 ]
+then
+	echo 'check backup or restore fail !'
+fi
+
+flash test-dsconf
+if [ $? != 0 ]; then
+	echo 'Default configuration invalid, reset default!'
+	flash default-sw
+fi
+
+flash test-csconf
+if [ $? != 0 ]; then
+	echo 'Current configuration invalid, reset to default configuration!'
+	flash reset
+fi
+
+/bin/script/startup.sh $restore_tag &
